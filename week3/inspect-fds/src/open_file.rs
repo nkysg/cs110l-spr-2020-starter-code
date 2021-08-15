@@ -1,14 +1,14 @@
 use regex::Regex;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-#[allow(unused_imports)] // TODO: delete this line for Milestone 4
+// #[allow(unused_imports)] // TODO: delete this line for Milestone 4
 use std::{fmt, fs};
 
-#[allow(unused)] // TODO: delete this line for Milestone 4
+// #[allow(unused)] // TODO: delete this line for Milestone 4
 const O_WRONLY: usize = 00000001;
-#[allow(unused)] // TODO: delete this line for Milestone 4
+// #[allow(unused)] // TODO: delete this line for Milestone 4
 const O_RDWR: usize = 00000002;
-#[allow(unused)] // TODO: delete this line for Milestone 4
+// #[allow(unused)] // TODO: delete this line for Milestone 4
 const COLORS: [&str; 6] = [
     "\x1B[38;5;9m",
     "\x1B[38;5;10m",
@@ -17,12 +17,12 @@ const COLORS: [&str; 6] = [
     "\x1B[38;5;13m",
     "\x1B[38;5;14m",
 ];
-#[allow(unused)] // TODO: delete this line for Milestone 4
+// #[allow(unused)] // TODO: delete this line for Milestone 4
 const CLEAR_COLOR: &str = "\x1B[0m";
 
 /// This enum can be used to represent whether a file is read-only, write-only, or read/write. An
 /// enum is basically a value that can be one of some number of "things."
-#[allow(unused)] // TODO: delete this line for Milestone 4
+// #[allow(unused)] // TODO: delete this line for Milestone 4
 #[derive(Debug, Clone, PartialEq)]
 pub enum AccessMode {
     Read,
@@ -53,7 +53,7 @@ pub struct OpenFile {
 }
 
 impl OpenFile {
-    #[allow(unused)] // TODO: delete this line for Milestone 4
+    // #[allow(unused)] // TODO: delete this line for Milestone 4
     pub fn new(name: String, cursor: usize, access_mode: AccessMode) -> OpenFile {
         OpenFile {
             name,
@@ -68,7 +68,7 @@ impl OpenFile {
     /// * For regular files, this will simply return the supplied path.
     /// * For terminals (files starting with /dev/pts), this will return "<terminal>".
     /// * For pipes (filenames formatted like pipe:[pipenum]), this will return "<pipe #pipenum>".
-    #[allow(unused)] // TODO: delete this line for Milestone 4
+  //  #[allow(unused)] // TODO: delete this line for Milestone 4
     fn path_to_name(path: &str) -> String {
         if path.starts_with("/dev/pts/") {
             String::from("<terminal>")
@@ -137,7 +137,17 @@ impl OpenFile {
     #[allow(unused)] // TODO: delete this line for Milestone 4
     pub fn from_fd(pid: usize, fd: usize) -> Option<OpenFile> {
         // TODO: implement for Milestone 4
-        unimplemented!();
+        // unimplemented!();
+        let path = format!("/proc/{}/fd/{}", pid, fd);
+        let path = fs::read_link(path).ok()?;
+        let link = format!("/proc/{}/fdinfo/{}", pid, fd);
+        let buf = fs::read_to_string(link).ok()?;
+        //if path.to_str().is_none() || buf.len() == 0 {
+           // return None;
+        }
+        Some(OpenFile{name: path.to_str().unwrap().to_string(), 
+            cursor: OpenFile::parse_cursor(&buf).unwrap(), 
+            access_mode: OpenFile::parse_access_mode(&buf).unwrap()})
     }
 
     /// This function returns the OpenFile's name with ANSI escape codes included to colorize

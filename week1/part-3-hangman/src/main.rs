@@ -17,6 +17,7 @@ use rand::Rng;
 use std::fs;
 use std::io;
 use std::io::Write;
+use std::collections::HashSet;
 
 const NUM_INCORRECT_GUESSES: u32 = 5;
 const WORDS_PATH: &str = "words.txt";
@@ -34,7 +35,43 @@ fn main() {
     // secret_word by doing secret_word_chars[i].
     let secret_word_chars: Vec<char> = secret_word.chars().collect();
     // Uncomment for debugging:
-    // println!("random word: {}", secret_word);
+    println!("random word: {}", secret_word);
 
+    let mut counter = 0;
+    let mut set : HashSet<usize> = HashSet::new();
+    loop {
+        let mut guess = String::new();
+        io::stdin()
+        .read_line(&mut guess)
+        .expect("Error readling line.");
+
+        let c = guess.chars().nth(0).unwrap();
+
+        if counter >= NUM_INCORRECT_GUESSES {
+            println!("you lost game");
+            break;
+        }
+
+        let mut result = None;
+        for (index, &ele) in secret_word_chars.iter().enumerate() {
+            if !set.contains(&index) && c == ele  {
+                result = Some(index);
+                set.insert(index);
+                break;
+            }
+        }
+
+        if result.is_none() {
+            println!("you guess error {}", c);
+            counter += 1;
+        } else {
+            println!("you guess right {}", c);
+        }
+
+        if set.len() == secret_word_chars.len() {
+            println!("You win game");
+            break;
+        }
+    }
     // Your code here! :)
 }

@@ -66,17 +66,40 @@ fn get_input_numbers() -> VecDeque<u32> {
     numbers
 }
 
+fn calc_farm(nums: &mut Arc<Mutex<VecDeque<u32>>>) {
+    loop {
+        let mut nums = nums.lock().unwrap();
+        if let Some(num) = nums.pop_front() {
+            factor_number(num);
+        } else {
+            break;
+        }
+    }
+}
+
 fn main() {
     let num_threads = num_cpus::get();
     println!("Farm starting on {} CPUs", num_threads);
     let start = Instant::now();
 
     // TODO: call get_input_numbers() and store a queue of numbers to factor
+    let nums = get_input_numbers();
+    let mut threads = Vec::with_capacity(num_threads);
+    let data_nums = Arc::new(Mutex::new(nums));
+    for _ in 0..num_threads {
+        let mut data_nums_clone = Arc::clone(&data_nums);
+        threads.push(thread::spawn(move || {
+            calc_farm(&mut data_nums_clone);
+        }));
+    }
 
     // TODO: spawn `num_threads` threads, each of which pops numbers off the queue and calls
     // factor_number() until the queue is empty
 
     // TODO: join all the threads you created
+    for handle in threads {
+        handle.join().expect("Panic happened in a inside thread");
+    }
 
     println!("Total execution time: {:?}", start.elapsed());
 }

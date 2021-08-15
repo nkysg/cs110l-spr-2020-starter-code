@@ -1,4 +1,5 @@
 use crossbeam_channel;
+use num_cpus;
 use std::{thread, time};
 
 fn parallel_map<T, U, F>(mut input_vec: Vec<T>, num_threads: usize, f: F) -> Vec<U>
@@ -9,6 +10,45 @@ where
 {
     let mut output_vec: Vec<U> = Vec::with_capacity(input_vec.len());
     // TODO: implement parallel map!
+
+    for _ in 0..input_vec.len() {
+        output_vec.push(Default::default());
+    }
+
+    let (sender, receiver) = crossbeam_channel::unbounded();
+    let (s, r) = crossbeam_channel::unbounded();
+    let mut threads = Vec::new();
+    let num_threads = num_cpus::get();
+
+    for _ in 0..num_threads {
+        let receiver = receiver.clone();
+        let s = s.clone();
+        threads.push(thread::spawn(move || {
+            while let Ok((i, num)) = receiver.recv() {
+                let res = f(num);
+                s.send((i, res)).expect("send result error");
+            }
+            drop(s);
+        }))
+    }
+    drop(s);
+
+   
+    for (i, item) in input_vec.into_iter().enumerate() {
+        sender.send((i, item)).expect("send error");
+    }
+
+    drop(sender);
+    while let Ok(res) = r.recv() {
+        let (i, num) = res;
+        output_vec[i] = num;
+    }
+
+
+    for handle in threads {
+        handle.join().expect("inside error");
+    }
+
     output_vec
 }
 
